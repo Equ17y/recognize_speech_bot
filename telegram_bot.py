@@ -52,6 +52,16 @@ async def handle_message(message: types.Message):
             logger.error(f"Ошибка при запросе к DialogFlow: {e}")
             await message.answer("Произошла ошибка при связи с сервером. Попробуйте позже.")
 
+@dp.errors()
+async def errors_handler(event: types.ErrorEvent, bot: Bot):
+    admin_id = os.getenv("ADMIN_CHAT_ID")
+    if admin_id:
+        await bot.send_message(
+            chat_id=admin_id, 
+            text=f"Ошибка в Telegram боте:\n{event.exception}"
+        )
+    return True           
+
 async def main():
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
