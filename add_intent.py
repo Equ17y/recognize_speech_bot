@@ -17,7 +17,6 @@ def create_intents_from_json(json_file_path):
     for intent_name, intent_data in data.items():
         clean_intent_name = intent_name.strip()
         
-        # Ищем ключи, игнорируя пробелы
         questions_key = next((k for k in intent_data.keys() if k.strip() == "questions"), None)
         answer_key = next((k for k in intent_data.keys() if k.strip() == "answer"), None)
         
@@ -28,14 +27,12 @@ def create_intents_from_json(json_file_path):
         questions = intent_data[questions_key]
         answer = intent_data[answer_key].strip()
 
-        # Формируем фразы
         training_phrases = []
         for question in questions:
             part = dialogflow.Intent.TrainingPhrase.Part(text=question.strip())
             training_phrase = dialogflow.Intent.TrainingPhrase(parts=[part])
             training_phrases.append(training_phrase)
 
-        # Формируем ответ
         text_message = dialogflow.Intent.Message.Text(text=[answer])
         message = dialogflow.Intent.Message(text=text_message)
 
