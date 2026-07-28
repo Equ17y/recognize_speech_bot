@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import functools
 from functools import partial
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
@@ -40,8 +41,7 @@ async def handle_message(message: types.Message, bot: Bot, project_id: str, lang
             await message.answer("Произошла ошибка при связи с сервером. Попробуйте позже.")
 
 
-async def errors_handler(event: types.ErrorEvent, bot: Bot):
-    admin_id = os.getenv("ADMIN_CHAT_ID")
+async def errors_handler(event: types.ErrorEvent, bot: Bot, admin_id: str):
     if admin_id:
         await bot.send_message(
             chat_id=admin_id, 
@@ -57,6 +57,7 @@ async def main():
     BOT_TOKEN = os.getenv("TELEGRAM_TOKEN_BOT")
     PROJECT_ID = os.getenv("GOOGLE_PROJECT_ID")
     LANGUAGE_CODE = "ru"
+    admin_id = os.getenv("ADMIN_CHAT_ID")
 
     logging.basicConfig(
         level=logging.INFO,
@@ -67,12 +68,14 @@ async def main():
     dp = Dispatcher()
 
     dp.message.register(start_command, CommandStart())
-    dp.message.register(partial(
+    dp.message.register(functools.partial(
         handle_message,
         project_id=PROJECT_ID,
         language_code=LANGUAGE_CODE)
     )
-    dp.errors.register(errors_handler)
+    dp.errors.register(
+        functools.partial(errors_handler, admin_id=os.getenv("ADMIN_CHAT_ID"))
+    )
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
