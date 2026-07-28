@@ -1,18 +1,14 @@
 import os
 import json
-from dotenv import load_dotenv
 from google.cloud import dialogflow_v2 as dialogflow
 
-load_dotenv()
-PROJECT_ID = os.getenv("GOOGLE_PROJECT_ID")
 
-def create_intents_from_json(json_file_path):
+def create_intents_from_json(json_file_path, project_id: str):
     with open(json_file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
     intents_client = dialogflow.IntentsClient()
-    
-    parent = f"projects/{PROJECT_ID}/agent"
+    parent = f"projects/{project_id}/agent"
 
     for intent_name, intent_data in data.items():
         clean_intent_name = intent_name.strip()
@@ -53,5 +49,14 @@ def create_intents_from_json(json_file_path):
         
         print("-" * 50)
 
+
+def main():
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    PROJECT_ID = os.getenv("GOOGLE_PROJECT_ID")
+    create_intents_from_json("learning_offers.json", PROJECT_ID)
+
 if __name__ == "__main__":
-    create_intents_from_json("learning_offers.json")
+     main()
+
