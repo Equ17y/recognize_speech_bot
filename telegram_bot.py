@@ -67,10 +67,10 @@ async def main():
     dp = Dispatcher()
 
     dp.message.register(start_command, CommandStart())
-    dp.message.register(
+    dp.message.register(partial(
         handle_message,
         project_id=PROJECT_ID,
-        language_code=LANGUAGE_CODE
+        language_code=LANGUAGE_CODE)
     )
     dp.errors.register(errors_handler)
 
