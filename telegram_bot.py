@@ -1,31 +1,17 @@
 import asyncio
 import logging
 import os
-from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
 from google.cloud import dialogflow_v2 as dialogflow
 
-load_dotenv()
-BOT_TOKEN = os.getenv("TELEGRAM_TOKEN_BOT")
-PROJECT_ID = os.getenv("GOOGLE_PROJECT_ID")
-LANGUAGE_CODE = "ru"
 
-logging.basicConfig(
-    level=logging.INFO, 
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
-
-def get_dialogflow_response(user_id: int, text: str) -> str:
+def get_dialogflow_response(user_id: int, text: str, project_id: str, language_code: str) -> str:
     session_client = dialogflow.SessionsClient()
     session_id = str(user_id)
-    session_path = session_client.session_path(PROJECT_ID, session_id)
+    session_path = session_client.session_path(project_id, session_id)
     
-    text_input = dialogflow.TextInput(text=text, language_code=LANGUAGE_CODE)
+    text_input = dialogflow.TextInput(text=text, language_code=language_code)
     query_input = dialogflow.QueryInput(text=text_input)
     
     response = session_client.detect_intent(
@@ -33,15 +19,15 @@ def get_dialogflow_response(user_id: int, text: str) -> str:
     )
     return response.query_result.fulfillment_text
 
-@dp.message(CommandStart())
+
 async def start_command(message: types.Message):
     await message.answer("Здравствуйте")
 
-@dp.message()
-async def handle_message(message: types.Message):
+
+async def handle_message(message: types.Message, bot: Bot, project_id: str, language_code: str):
     if message.text:
         try:
-            answer = get_dialogflow_response(message.from_user.id, message.text)
+            answer = get_dialogflow_response(message.from_user.id, message.text, language_code)
             
             if not answer:
                 answer = "Я вас не понимаю. Попробуйте переформулировать."
@@ -49,10 +35,10 @@ async def handle_message(message: types.Message):
             await message.answer(answer)
             
         except Exception as e:
-            logger.error(f"Ошибка при запросе к DialogFlow: {e}")
+            logging.error(f"Ошибка при запросе к DialogFlow: {e}")
             await message.answer("Произошла ошибка при связи с сервером. Попробуйте позже.")
 
-@dp.errors()
+
 async def errors_handler(event: types.ErrorEvent, bot: Bot):
     admin_id = os.getenv("ADMIN_CHAT_ID")
     if admin_id:
@@ -62,7 +48,32 @@ async def errors_handler(event: types.ErrorEvent, bot: Bot):
         )
     return True           
 
+
 async def main():
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    BOT_TOKEN = os.getenv("TELEGRAM_TOKEN_BOT")
+    PROJECT_ID = os.getenv("GOOGLE_PROJECT_ID")
+    LANGUAGE_CODE = "ru"
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s"
+    )
+
+    bot = Bot(token=BOT_TOKEN)
+    dp = Dispatcher()
+
+    dp.message.register(start_command, CommandStart())
+    dp.message.register(
+        handle_message,
+        bot=bot,
+        project_id=PROJECT_ID,
+        language_code=LANGUAGE_CODE
+    )
+    dp.errors.register(errors_handler)
+
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
