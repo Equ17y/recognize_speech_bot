@@ -7,15 +7,14 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
 from google.cloud import dialogflow_v2 as dialogflow
 
+logger = logging.getLogger(__name__)
 
 def get_dialogflow_response(user_id: int, text: str, project_id: str, language_code: str) -> str:
     session_client = dialogflow.SessionsClient()
     session_id = str(user_id)
     session_path = session_client.session_path(project_id, session_id)
-    
     text_input = dialogflow.TextInput(text=text, language_code=language_code)
     query_input = dialogflow.QueryInput(text=text_input)
-    
     response = session_client.detect_intent(
         request={"session": session_path, "query_input": query_input}
     )
@@ -30,12 +29,9 @@ async def handle_message(message: types.Message, bot: Bot, project_id: str, lang
     if message.text:
         try:
             answer = get_dialogflow_response(message.from_user.id, message.text,project_id, language_code)
-            
             if not answer:
                 answer = "Я вас не понимаю. Попробуйте переформулировать."
-                
             await message.answer(answer)
-            
         except Exception as e:
             logging.error(f"Ошибка при запросе к DialogFlow: {e}")
             await message.answer("Произошла ошибка при связи с сервером. Попробуйте позже.")
@@ -54,9 +50,9 @@ async def main():
     from dotenv import load_dotenv
     load_dotenv()
 
-    BOT_TOKEN = os.getenv("TELEGRAM_TOKEN_BOT")
-    PROJECT_ID = os.getenv("GOOGLE_PROJECT_ID")
-    LANGUAGE_CODE = "ru"
+    bot_token = os.getenv("TELEGRAM_TOKEN_BOT")
+    project_id = os.getenv("GOOGLE_PROJECT_ID")
+    language_code = "ru"
     admin_id = os.getenv("ADMIN_CHAT_ID")
 
     logging.basicConfig(
@@ -64,17 +60,17 @@ async def main():
         format="%(asctime)s - %(levelname)s - %(message)s"
     )
 
-    bot = Bot(token=BOT_TOKEN)
+    bot = Bot(token=bot_token)
     dp = Dispatcher()
 
     dp.message.register(start_command, CommandStart())
     dp.message.register(functools.partial(
         handle_message,
-        project_id=PROJECT_ID,
-        language_code=LANGUAGE_CODE)
+        project_id=project_id,
+        language_code=language_code)
     )
     dp.errors.register(
-        functools.partial(errors_handler, admin_id=os.getenv("ADMIN_CHAT_ID"))
+        functools.partial(errors_handler, admin_id=admin_id)
     )
 
     await bot.delete_webhook(drop_pending_updates=True)

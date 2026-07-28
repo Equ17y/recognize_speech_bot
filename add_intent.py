@@ -9,12 +9,10 @@ def create_intents_from_json(json_file_path: str, project_id: str) -> list:
 
     intents_client = dialogflow.IntentsClient()
     parent = f"projects/{project_id}/agent"
-
     results = []
 
     for intent_name, intent_data in data.items():
         clean_intent_name = intent_name.strip()
-        
         questions_key = next((k for k in intent_data.keys() if k.strip() == "questions"), None)
         answer_key = next((k for k in intent_data.keys() if k.strip() == "answer"), None)
         
