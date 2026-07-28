@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+from functools import partial
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
 from google.cloud import dialogflow_v2 as dialogflow
@@ -27,7 +28,7 @@ async def start_command(message: types.Message):
 async def handle_message(message: types.Message, bot: Bot, project_id: str, language_code: str):
     if message.text:
         try:
-            answer = get_dialogflow_response(message.from_user.id, message.text, language_code)
+            answer = get_dialogflow_response(message.from_user.id, message.text,project_id, language_code)
             
             if not answer:
                 answer = "Я вас не понимаю. Попробуйте переформулировать."
@@ -68,7 +69,6 @@ async def main():
     dp.message.register(start_command, CommandStart())
     dp.message.register(
         handle_message,
-        bot=bot,
         project_id=PROJECT_ID,
         language_code=LANGUAGE_CODE
     )
