@@ -1,10 +1,13 @@
+"""Script to create DialogFlow intents from JSON file."""
+
 import os
 import json
 from google.cloud import dialogflow_v2 as dialogflow
 
 
 def create_intents_from_json(json_file_path: str, project_id: str) -> list:
-    with open(json_file_path, 'r', encoding='utf-8') as f:
+    """Create intents in DialogFlow from JSON. Returns list of results."""
+    with open(json_file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     intents_client = dialogflow.IntentsClient()
@@ -13,19 +16,31 @@ def create_intents_from_json(json_file_path: str, project_id: str) -> list:
 
     for intent_name, intent_data in data.items():
         clean_intent_name = intent_name.strip()
-        questions_key = next((k for k in intent_data.keys() if k.strip() == "questions"), None)
-        answer_key = next((k for k in intent_data.keys() if k.strip() == "answer"), None)
-        
+        questions_key = next(
+            (k for k in intent_data.keys() if k.strip() == "questions"), None
+        )
+        answer_key = next(
+            (k for k in intent_data.keys() if k.strip() == "answer"), None
+        )
+
         if not questions_key or not answer_key:
-            results.append({"name": clean_intent_name, "status": "error", "message": "Не найдены ключи"})
+            results.append(
+                {
+                    "name": clean_intent_name,
+                    "status": "error",
+                    "message": "Не найдены ключи",
+                }
+            )
             continue
-        
+
         questions = intent_data[questions_key]
         answer = intent_data[answer_key].strip()
 
         training_phrases = []
         for question in questions:
-            part = dialogflow.Intent.TrainingPhrase.Part(text=question.strip())
+            part = dialogflow.Intent.TrainingPhrase.Part(
+                text=question.strip()
+            )
             training_phrase = dialogflow.Intent.TrainingPhrase(parts=[part])
             training_phrases.append(training_phrase)
 
@@ -35,23 +50,35 @@ def create_intents_from_json(json_file_path: str, project_id: str) -> list:
         intent = dialogflow.Intent(
             display_name=clean_intent_name,
             training_phrases=training_phrases,
-            messages=[message]
+            messages=[message],
         )
-        
+
         try:
-            response = intents_client.create_intent(parent=parent, intent=intent)
-            results.append({
-                "name": response.display_name, 
-                "status": "ok", 
-                "phrases": len(response.training_phrases)
-            })
+            response = intents_client.create_intent(
+                parent=parent, intent=intent
+            )
+            results.append(
+                {
+                    "name": response.display_name,
+                    "status": "ok",
+                    "phrases": len(response.training_phrases),
+                }
+            )
         except Exception as e:
-            results.append({"name": clean_intent_name, "status": "error", "message": str(e)})
+            results.append(
+                {
+                    "name": clean_intent_name,
+                    "status": "error",
+                    "message": str(e),
+                }
+            )
     return results
 
 
 def main():
+    """Load env, create intents and print results."""
     from dotenv import load_dotenv
+
     load_dotenv()
 
     project_id = os.getenv("GOOGLE_PROJECT_ID")
@@ -62,9 +89,12 @@ def main():
         if result["status"] == "ok":
             print(f"Создан: '{result['name']}' (фраз: {result['phrases']})")
         else:
-            print(f"Ошибка для '{result['name']}': {result.get('message', 'Не найдены ключи')}")
+            print(
+                f"Ошибка для '{result['name']}': "
+                f"{result.get('message','Не найдены ключи')}"
+            )
         print("-" * 50)
 
-if __name__ == "__main__":
-     main()
 
+if __name__ == "__main__":
+    main()
