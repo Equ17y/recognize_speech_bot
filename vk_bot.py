@@ -64,7 +64,7 @@ def main():
 
     try:
         for event in longpoll.listen():
-            if event.type == VkEventType.MESSAGE_NEW:
+            if event.type != VkEventType.MESSAGE_NEW:
                 continue
 
             if not event.to_me:
