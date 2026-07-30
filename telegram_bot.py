@@ -6,24 +6,9 @@ import os
 from functools import partial
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
-from google.cloud import dialogflow_v2 as dialogflow
+from dialogflow_api import get_dialogflow_response
 
 logger = logging.getLogger(__name__)
-
-
-def get_dialogflow_response(
-    user_id: int, text: str, project_id: str, language_code: str
-) -> str:
-    """Send text to DialogFlow and return the response."""
-    session_client = dialogflow.SessionsClient()
-    session_id = str(user_id)
-    session_path = session_client.session_path(project_id, session_id)
-    text_input = dialogflow.TextInput(text=text, language_code=language_code)
-    query_input = dialogflow.QueryInput(text=text_input)
-    response = session_client.detect_intent(
-        request={"session": session_path, "query_input": query_input}
-    )
-    return response.query_result.fulfillment_text
 
 
 async def start_command(message: types.Message):
@@ -37,7 +22,7 @@ async def handle_message(
     """Handle text messages and send them to DialogFlow."""
     if message.text:
         try:
-            answer = get_dialogflow_response(
+            answer, _ = get_dialogflow_response(
                 message.from_user.id, message.text, project_id, language_code
             )
             if not answer:
