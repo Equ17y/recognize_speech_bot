@@ -12,16 +12,13 @@ def send_error_to_tg(error_text: str, tg_token: str, admin_id: str):
     if not tg_token or not admin_id:
         return
     url = f"https://api.telegram.org/bot{tg_token}/sendMessage"
-    try:
-        requests.post(
-            url,
-            json={
-                "chat_id": admin_id,
-                "text": f"Ошибка в VK боте:\n{error_text}",
-            },
-        )
-    except Exception as e:
-        print(f"Не удалось отправить ошибку в Telegram: {e}")
+    requests.post(
+        url,
+        json={
+            "chat_id": admin_id,
+            "text": f"Ошибка в VK боте:\n{error_text}",
+        },
+    )
 
 
 def main():
