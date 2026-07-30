@@ -1,6 +1,7 @@
 """VK bot with DialogFlow integration and monitoring."""
 
 import os
+import re
 import requests
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
@@ -12,13 +13,21 @@ def send_error_to_tg(error_text: str, tg_token: str, admin_id: str):
     if not tg_token or not admin_id:
         return
     url = f"https://api.telegram.org/bot{tg_token}/sendMessage"
-    requests.post(
+    response = requests.post(
         url,
         json={
             "chat_id": admin_id,
             "text": f"Ошибка в VK боте:\n{error_text}",
         },
     )
+
+    response.raise_for_status()
+
+    response_data = response.json()
+    if not response_data.get("ok"):
+        raise requests.exceptions.HTTPError(
+            f"Telegram API error: {response_data.get('description', 'Unknown error')}"
+        )
 
 
 def main():
