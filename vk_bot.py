@@ -62,7 +62,7 @@ def main():
 
             try:
                 answer, is_fallback = get_dialogflow_response(
-                    event.user_id, event.text, project_id, language_code
+                    event.user_id, event.text, project_id, language_code, platform="vk"
                 )
                 if is_fallback:
                     print(

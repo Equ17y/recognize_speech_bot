@@ -23,7 +23,7 @@ async def handle_message(
     if message.text:
         try:
             answer, _ = get_dialogflow_response(
-                message.from_user.id, message.text, project_id, language_code
+                message.from_user.id, message.text, project_id, language_code, platform="tg"
             )
             if not answer:
                 answer = "Я вас не понимаю. Попробуйте переформулировать."

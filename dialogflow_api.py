@@ -3,11 +3,11 @@ from google.cloud import dialogflow_v2 as dialogflow
 
 
 def get_dialogflow_response(
-    user_id: int, text: str, project_id: str, language_code: str
+    user_id: int, text: str, project_id: str, language_code: str, platform: str
 ):
     """Send text to DialogFlow and return (response, is_fallback)."""
     session_client = dialogflow.SessionsClient()
-    session_id = str(user_id)
+    session_id = f"{platform}-{user_id}"
     session_path = session_client.session_path(project_id, session_id)
     text_input = dialogflow.TextInput(text=text, language_code=language_code)
     query_input = dialogflow.QueryInput(text=text_input)
