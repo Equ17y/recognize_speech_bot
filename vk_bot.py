@@ -23,10 +23,10 @@ def send_error_to_tg(error_text: str, tg_token: str, admin_id: str):
 
     response.raise_for_status()
 
-    response_data = response.json()
-    if not response_data.get("ok"):
+    telegram_response = response.json()
+    if not telegram_response.get("ok"):
         raise requests.exceptions.HTTPError(
-            f"Telegram API error: {response_data.get('description', 'Unknown error')}"
+            f"Telegram API error: {telegram_response.get('description', 'Unknown error')}"
         )
 
 

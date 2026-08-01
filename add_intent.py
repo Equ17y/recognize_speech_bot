@@ -8,13 +8,13 @@ from google.cloud import dialogflow_v2 as dialogflow
 def create_intents_from_json(json_file_path: str, project_id: str) -> list:
     """Create intents in DialogFlow from JSON. Returns list of results."""
     with open(json_file_path, "r", encoding="utf-8") as f:
-        intents_data = json.load(f)
+        raw_intents = json.load(f)
 
     intents_client = dialogflow.IntentsClient()
     parent = f"projects/{project_id}/agent"
-    creation_results = []
+    creation_report = []
 
-    for intent_name, intent_data in intents_data.items():
+    for intent_name, intent_data in raw_intents.items():
         clean_intent_name = intent_name.strip()
         questions_key = next(
             (k for k in intent_data.keys() if k.strip() == "questions"), None
@@ -24,7 +24,7 @@ def create_intents_from_json(json_file_path: str, project_id: str) -> list:
         )
 
         if not questions_key or not answer_key:
-            creation_results.append(
+            creation_report.append(
                 {
                     "name": clean_intent_name,
                     "status": "error",
@@ -57,7 +57,7 @@ def create_intents_from_json(json_file_path: str, project_id: str) -> list:
             response = intents_client.create_intent(
                 parent=parent, intent=intent
             )
-            creation_results.append(
+            creation_report.append(
                 {
                     "name": response.display_name,
                     "status": "ok",
@@ -65,14 +65,14 @@ def create_intents_from_json(json_file_path: str, project_id: str) -> list:
                 }
             )
         except Exception as e:
-            creation_results.append(
+            creation_report.append(
                 {
                     "name": clean_intent_name,
                     "status": "error",
                     "message": str(e),
                 }
             )
-    return creation_results
+    return creation_report
 
 
 def main():
@@ -83,9 +83,9 @@ def main():
 
     project_id = os.getenv("GOOGLE_PROJECT_ID")
 
-    creation_results = create_intents_from_json("learning_offers.json", project_id)
+    creation_report = create_intents_from_json("learning_offers.json", project_id)
 
-    for result in creation_results:
+    for result in creation_report:
         if result["status"] == "ok":
             print(f"Создан: '{result['name']}' (фраз: {result['phrases']})")
         else:
